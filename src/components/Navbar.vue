@@ -36,6 +36,13 @@ import { RouterLink } from 'vue-router'
             Grup Chat
           </RouterLink>
           <RouterLink
+            to="/register"
+            class="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+            active-class="ring-2 ring-blue-100"
+          >
+            Register
+          </RouterLink>
+          <RouterLink
             to="/login"
             class="rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:border-blue-200 hover:bg-blue-100"
             active-class="ring-2 ring-blue-200"

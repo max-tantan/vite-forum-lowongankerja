@@ -107,6 +107,21 @@ const handleSubmit = async () => {
           <div class="mx-auto w-full max-w-md">
             <div class="rounded-[28px] border border-slate-200 bg-white p-7 shadow-[0_20px_45px_-35px_rgba(15,23,42,0.45)]">
               <div class="mb-8">
+                <div class="inline-flex rounded-2xl border border-slate-200 bg-slate-50 p-1">
+                  <RouterLink
+                    to="/login"
+                    class="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm"
+                  >
+                    Masuk
+                  </RouterLink>
+                  <RouterLink
+                    to="/register"
+                    class="rounded-xl px-4 py-2 text-sm font-medium text-slate-500 transition hover:text-slate-700"
+                  >
+                    Register
+                  </RouterLink>
+                </div>
+
                 <p class="text-sm font-semibold uppercase tracking-[0.22em] text-blue-600">
                   Welcome back
                 </p>
@@ -192,8 +207,8 @@ const handleSubmit = async () => {
 
               <p class="mt-6 text-center text-sm text-slate-500">
                 Belum punya akun?
-                <RouterLink to="/forum" class="font-semibold text-blue-600 transition hover:text-blue-700">
-                  Jelajahi forum dulu
+                <RouterLink to="/register" class="font-semibold text-blue-600 transition hover:text-blue-700">
+                  Buat akun sekarang
                 </RouterLink>
               </p>
             </div>

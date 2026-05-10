@@ -5,6 +5,7 @@ import GroupChat from '../views/GroupChat.vue'
 import JobDetail from '../views/JobDetail.vue'
 import ForumPost from '../views/ForumPost.vue'
 import Login from '../views/Login.vue'
+import Register from '../views/Register.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: Home },
@@ -12,7 +13,8 @@ const routes = [
   { path: '/forum/:id', name: 'ForumPost', component: ForumPost },
   { path: '/chat', name: 'GroupChat', component: GroupChat },
   { path: '/job/:id', name: 'JobDetail', component: JobDetail },
-  { path: '/login', name: 'Login', component: Login }
+  { path: '/login', name: 'Login', component: Login },
+  { path: '/register', name: 'Register', component: Register }
 ]
 
 const router = createRouter({
