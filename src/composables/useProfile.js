@@ -16,6 +16,9 @@ const buildDefaultProfile = (user) => {
     location: 'Jakarta, Indonesia',
     availability: 'Siap interview dalam 1 minggu',
     targetRole: 'Frontend Developer',
+    phone: '08xxxxxxxxxx',
+    portfolioUrl: '',
+    linkedinUrl: '',
     about:
       'Profil ini tersimpan lokal di browser. Kamu bisa upload banner dan CV PDF untuk simulasi profil kandidat yang lebih realistis.',
     skills: ['Vue.js', 'UI Thinking', 'Interview Prep'],

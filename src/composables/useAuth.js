@@ -46,6 +46,14 @@ const getStoredAccounts = () => {
   return accounts
 }
 
+const setStoredAccounts = (accounts) => {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts))
+}
+
 const sanitizeUser = (account) => {
   if (!account) {
     return null
@@ -124,11 +132,45 @@ export const useAuth = () => {
     getStoredAccounts()
   }
 
+  const updateCurrentUserProfile = (updates) => {
+    if (!authState.currentUser?.username) {
+      return {
+        ok: false,
+        message: 'Tidak ada akun aktif untuk diperbarui.'
+      }
+    }
+
+    const accounts = getStoredAccounts()
+    const accountIndex = accounts.findIndex((account) => account.username === authState.currentUser.username)
+
+    if (accountIndex === -1) {
+      return {
+        ok: false,
+        message: 'Akun aktif tidak ditemukan.'
+      }
+    }
+
+    const nextAccount = {
+      ...accounts[accountIndex],
+      ...updates
+    }
+
+    accounts[accountIndex] = nextAccount
+    setStoredAccounts(accounts)
+    persistSession(nextAccount)
+
+    return {
+      ok: true,
+      user: sanitizeUser(nextAccount)
+    }
+  }
+
   return {
     currentUser: computed(() => authState.currentUser),
     isAuthenticated,
     ensureAccounts,
     signIn,
-    signOut
+    signOut,
+    updateCurrentUserProfile
   }
 }

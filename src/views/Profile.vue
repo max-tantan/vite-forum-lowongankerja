@@ -5,14 +5,29 @@ import { useAuth } from '../composables/useAuth'
 import { loadStoredProfile, saveStoredProfile } from '../composables/useProfile'
 
 const router = useRouter()
-const { currentUser, signOut } = useAuth()
+const { currentUser, signOut, updateCurrentUserProfile } = useAuth()
 
 const profile = ref(null)
-const skillsInput = ref('')
+const editForm = ref({
+  fullName: '',
+  email: '',
+  headline: '',
+  location: '',
+  targetRole: '',
+  availability: '',
+  phone: '',
+  portfolioUrl: '',
+  linkedinUrl: '',
+  about: '',
+  skills: ''
+})
+
+const showEditModal = ref(false)
 const saveMessage = ref('')
 const saveError = ref('')
 const bannerError = ref('')
 const cvError = ref('')
+const editError = ref('')
 const bannerInput = ref(null)
 const cvInput = ref(null)
 
@@ -70,49 +85,26 @@ const profileUpdatedAt = computed(() => {
   })
 })
 
+const contactItems = computed(() => {
+  if (!profile.value) {
+    return []
+  }
+
+  return [
+    { label: 'Lokasi', value: profile.value.location },
+    { label: 'Ketersediaan', value: profile.value.availability },
+    { label: 'Nomor Kontak', value: profile.value.phone || 'Belum diisi' },
+    { label: 'Portfolio', value: profile.value.portfolioUrl || 'Belum diisi' },
+    { label: 'LinkedIn', value: profile.value.linkedinUrl || 'Belum diisi' }
+  ]
+})
+
 const resetAlerts = () => {
   saveMessage.value = ''
   saveError.value = ''
   bannerError.value = ''
   cvError.value = ''
-}
-
-const persistProfile = () => {
-  if (!currentUser.value || !profile.value) {
-    return
-  }
-
-  resetAlerts()
-  const nextSkills = skillsInput.value
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean)
-    .slice(0, 8)
-
-  const result = saveStoredProfile(currentUser.value, {
-    ...profile.value,
-    skills: nextSkills.length > 0 ? nextSkills : profile.value.skills
-  })
-
-  if (!result.ok) {
-    saveError.value = result.message
-    return
-  }
-
-  profile.value = result.profile
-  skillsInput.value = result.profile.skills.join(', ')
-  saveMessage.value = 'Perubahan profil berhasil disimpan secara lokal.'
-}
-
-const loadProfile = () => {
-  if (!currentUser.value) {
-    profile.value = null
-    return
-  }
-
-  const storedProfile = loadStoredProfile(currentUser.value)
-  profile.value = storedProfile
-  skillsInput.value = storedProfile.skills.join(', ')
+  editError.value = ''
 }
 
 const readFileAsDataUrl = (file) => {
@@ -122,6 +114,111 @@ const readFileAsDataUrl = (file) => {
     reader.onerror = () => reject(new Error('Gagal membaca file.'))
     reader.readAsDataURL(file)
   })
+}
+
+const loadProfile = () => {
+  if (!currentUser.value) {
+    profile.value = null
+    return
+  }
+
+  profile.value = loadStoredProfile(currentUser.value)
+}
+
+const persistProfile = (nextProfile, successMessage = 'Perubahan profil berhasil disimpan secara lokal.') => {
+  if (!currentUser.value) {
+    return false
+  }
+
+  const result = saveStoredProfile(currentUser.value, nextProfile)
+
+  if (!result.ok) {
+    saveError.value = result.message
+    return false
+  }
+
+  profile.value = result.profile
+  saveMessage.value = successMessage
+  return true
+}
+
+const openEditModal = () => {
+  if (!currentUser.value || !profile.value) {
+    return
+  }
+
+  editError.value = ''
+  editForm.value = {
+    fullName: currentUser.value.fullName,
+    email: currentUser.value.email,
+    headline: profile.value.headline,
+    location: profile.value.location,
+    targetRole: profile.value.targetRole,
+    availability: profile.value.availability,
+    phone: profile.value.phone,
+    portfolioUrl: profile.value.portfolioUrl,
+    linkedinUrl: profile.value.linkedinUrl,
+    about: profile.value.about,
+    skills: profile.value.skills.join(', ')
+  }
+  showEditModal.value = true
+}
+
+const closeEditModal = () => {
+  showEditModal.value = false
+  editError.value = ''
+}
+
+const handleEditProfile = () => {
+  if (!currentUser.value || !profile.value) {
+    return
+  }
+
+  resetAlerts()
+
+  if (editForm.value.fullName.trim() === '' || editForm.value.email.trim() === '') {
+    editError.value = 'Nama lengkap dan email wajib diisi.'
+    return
+  }
+
+  const authUpdate = updateCurrentUserProfile({
+    fullName: editForm.value.fullName.trim(),
+    email: editForm.value.email.trim()
+  })
+
+  if (!authUpdate.ok) {
+    editError.value = authUpdate.message
+    return
+  }
+
+  const nextSkills = editForm.value.skills
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 8)
+
+  const saved = persistProfile(
+    {
+      ...profile.value,
+      headline: editForm.value.headline.trim(),
+      location: editForm.value.location.trim(),
+      targetRole: editForm.value.targetRole.trim(),
+      availability: editForm.value.availability,
+      phone: editForm.value.phone.trim(),
+      portfolioUrl: editForm.value.portfolioUrl.trim(),
+      linkedinUrl: editForm.value.linkedinUrl.trim(),
+      about: editForm.value.about.trim(),
+      skills: nextSkills.length > 0 ? nextSkills : profile.value.skills
+    },
+    'Edit profile berhasil disimpan.'
+  )
+
+  if (!saved) {
+    editError.value = saveError.value || 'Perubahan profil gagal disimpan.'
+    return
+  }
+
+  showEditModal.value = false
 }
 
 const handleBannerChange = async (event) => {
@@ -147,12 +244,17 @@ const handleBannerChange = async (event) => {
 
   try {
     const dataUrl = await readFileAsDataUrl(file)
-    profile.value.bannerImage = {
-      name: file.name,
-      size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-      dataUrl
-    }
-    persistProfile()
+    persistProfile(
+      {
+        ...profile.value,
+        bannerImage: {
+          name: file.name,
+          size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+          dataUrl
+        }
+      },
+      'Banner profile berhasil diperbarui.'
+    )
   } catch {
     bannerError.value = 'Banner gagal diproses.'
   }
@@ -183,13 +285,18 @@ const handleCvChange = async (event) => {
 
   try {
     const dataUrl = await readFileAsDataUrl(file)
-    profile.value.cvFile = {
-      name: file.name,
-      size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-      dataUrl,
-      uploadedAt: new Date().toISOString()
-    }
-    persistProfile()
+    persistProfile(
+      {
+        ...profile.value,
+        cvFile: {
+          name: file.name,
+          size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+          dataUrl,
+          uploadedAt: new Date().toISOString()
+        }
+      },
+      'CV profile berhasil diperbarui.'
+    )
   } catch {
     cvError.value = 'CV gagal diproses.'
   }
@@ -200,13 +307,17 @@ const removeBanner = () => {
     return
   }
 
-  profile.value.bannerImage = null
-
   if (bannerInput.value) {
     bannerInput.value.value = ''
   }
 
-  persistProfile()
+  persistProfile(
+    {
+      ...profile.value,
+      bannerImage: null
+    },
+    'Banner berhasil dihapus.'
+  )
 }
 
 const removeCv = () => {
@@ -214,13 +325,17 @@ const removeCv = () => {
     return
   }
 
-  profile.value.cvFile = null
-
   if (cvInput.value) {
     cvInput.value.value = ''
   }
 
-  persistProfile()
+  persistProfile(
+    {
+      ...profile.value,
+      cvFile: null
+    },
+    'CV berhasil dihapus dari profile.'
+  )
 }
 
 const handleSignOut = () => {
@@ -256,6 +371,13 @@ onMounted(() => {
               />
               Upload banner
             </label>
+            <button
+              type="button"
+              class="rounded-full border border-white/80 bg-white/85 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur transition hover:bg-white"
+              @click="openEditModal"
+            >
+              Edit profile
+            </button>
             <button
               type="button"
               class="rounded-full border border-white/80 bg-white/85 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur transition hover:bg-white"
@@ -302,77 +424,25 @@ onMounted(() => {
           <div class="flex flex-col gap-3 border-b border-slate-100 pb-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Informasi profil</p>
-              <h2 class="mt-2 text-2xl font-bold tracking-tight text-slate-900">Lengkapi profil agar lebih siap dilihat recruiter.</h2>
+              <h2 class="mt-2 text-2xl font-bold tracking-tight text-slate-900">Profile summary yang siap dibaca cepat.</h2>
             </div>
-            <p class="text-sm text-slate-500">Perubahan disimpan lokal di browser ini.</p>
+            <button
+              type="button"
+              class="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+              @click="openEditModal"
+            >
+              Edit profile
+            </button>
           </div>
 
-          <div class="mt-6 space-y-5">
-            <label class="block">
-              <span class="mb-2 block text-sm font-medium text-slate-700">Headline profile</span>
-              <input
-                v-model="profile.headline"
-                type="text"
-                placeholder="Contoh: Frontend developer yang fokus pada UI modern"
-                class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
-              />
-            </label>
+          <div class="mt-6">
+            <h3 class="text-lg font-semibold text-slate-900">Tentang saya</h3>
+            <p class="mt-3 text-sm leading-7 text-slate-600">{{ profile.about }}</p>
+          </div>
 
-            <div class="grid gap-4 sm:grid-cols-2">
-              <label class="block">
-                <span class="mb-2 block text-sm font-medium text-slate-700">Lokasi</span>
-                <input
-                  v-model="profile.location"
-                  type="text"
-                  placeholder="Jakarta, Indonesia"
-                  class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
-                />
-              </label>
-
-              <label class="block">
-                <span class="mb-2 block text-sm font-medium text-slate-700">Target role</span>
-                <input
-                  v-model="profile.targetRole"
-                  type="text"
-                  placeholder="Frontend Developer"
-                  class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
-                />
-              </label>
-            </div>
-
-            <label class="block">
-              <span class="mb-2 block text-sm font-medium text-slate-700">Ketersediaan interview</span>
-              <select
-                v-model="profile.availability"
-                class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
-              >
-                <option>Siap interview dalam 1 minggu</option>
-                <option>Siap interview dalam 2 minggu</option>
-                <option>Terbuka untuk diskusi terlebih dahulu</option>
-              </select>
-            </label>
-
-            <label class="block">
-              <span class="mb-2 block text-sm font-medium text-slate-700">Tentang saya</span>
-              <textarea
-                v-model="profile.about"
-                rows="5"
-                placeholder="Tulis ringkasan singkat tentang pengalaman, fokus, dan nilai yang bisa kamu bawa."
-                class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100 resize-none"
-              ></textarea>
-            </label>
-
-            <label class="block">
-              <span class="mb-2 block text-sm font-medium text-slate-700">Skill utama</span>
-              <input
-                v-model="skillsInput"
-                type="text"
-                placeholder="Pisahkan dengan koma, misalnya Vue.js, Figma, Interview Prep"
-                class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
-              />
-            </label>
-
-            <div class="flex flex-wrap gap-2">
+          <div class="mt-6">
+            <h3 class="text-lg font-semibold text-slate-900">Skill utama</h3>
+            <div class="mt-4 flex flex-wrap gap-2">
               <span
                 v-for="skill in profile.skills"
                 :key="skill"
@@ -381,31 +451,13 @@ onMounted(() => {
                 {{ skill }}
               </span>
             </div>
+          </div>
 
-            <div v-if="saveError" class="rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
-              {{ saveError }}
-            </div>
-            <div v-if="saveMessage" class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-700">
-              {{ saveMessage }}
-            </div>
-
-            <div class="flex flex-wrap gap-3">
-              <button
-                type="button"
-                class="rounded-full bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
-                @click="persistProfile"
-              >
-                Simpan perubahan profil
-              </button>
-              <button
-                v-if="profile.bannerImage"
-                type="button"
-                class="rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
-                @click="removeBanner"
-              >
-                Hapus banner
-              </button>
-            </div>
+          <div v-if="saveError" class="mt-6 rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
+            {{ saveError }}
+          </div>
+          <div v-if="saveMessage" class="mt-6 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-700">
+            {{ saveMessage }}
           </div>
         </article>
 
@@ -436,11 +488,15 @@ onMounted(() => {
             </div>
           </div>
 
-          <div class="mt-5 rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
-            <p class="text-sm font-semibold text-emerald-800">Akun demo aktif</p>
-            <p class="mt-1 text-sm leading-6 text-emerald-700">
-              Kredensial virtual lokal yang aktif adalah <span class="font-semibold">user / 123</span>.
-            </p>
+          <div class="mt-5 grid gap-4">
+            <div
+              v-for="item in contactItems"
+              :key="item.label"
+              class="rounded-2xl border border-slate-100 bg-slate-50/80 p-4"
+            >
+              <p class="text-sm text-slate-500">{{ item.label }}</p>
+              <p class="mt-1 break-words text-base font-semibold text-slate-900">{{ item.value }}</p>
+            </div>
           </div>
         </aside>
 
@@ -523,6 +579,171 @@ onMounted(() => {
         </aside>
       </div>
     </section>
+
+    <Teleport to="body">
+      <div
+        v-if="showEditModal"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm"
+      >
+        <div class="w-full max-w-3xl overflow-y-auto rounded-[30px] border border-white/60 bg-white shadow-[0_40px_100px_-50px_rgba(15,23,42,0.45)]">
+          <div class="border-b border-slate-100 px-6 py-5 sm:px-7">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Edit profile</p>
+                <h2 class="mt-2 text-2xl font-bold tracking-tight text-slate-900">Perbarui identitas dan informasi profesional</h2>
+                <p class="mt-1 text-sm text-slate-500">Perubahan akan langsung tersimpan lokal dan tercermin di navbar/profile.</p>
+              </div>
+              <button
+                type="button"
+                class="rounded-full border border-slate-200 px-3 py-2 text-sm font-medium text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
+                @click="closeEditModal"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-5 px-6 py-6 sm:px-7">
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">Nama lengkap</span>
+                <input
+                  v-model="editForm.fullName"
+                  type="text"
+                  class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                />
+              </label>
+
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">Email</span>
+                <input
+                  v-model="editForm.email"
+                  type="email"
+                  class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                />
+              </label>
+            </div>
+
+            <label class="block">
+              <span class="mb-2 block text-sm font-medium text-slate-700">Headline profile</span>
+              <input
+                v-model="editForm.headline"
+                type="text"
+                class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+              />
+            </label>
+
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">Lokasi</span>
+                <input
+                  v-model="editForm.location"
+                  type="text"
+                  class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                />
+              </label>
+
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">Target role</span>
+                <input
+                  v-model="editForm.targetRole"
+                  type="text"
+                  class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                />
+              </label>
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">Ketersediaan interview</span>
+                <select
+                  v-model="editForm.availability"
+                  class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                >
+                  <option>Siap interview dalam 1 minggu</option>
+                  <option>Siap interview dalam 2 minggu</option>
+                  <option>Terbuka untuk diskusi terlebih dahulu</option>
+                </select>
+              </label>
+
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">Nomor kontak</span>
+                <input
+                  v-model="editForm.phone"
+                  type="text"
+                  class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                />
+              </label>
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">Portfolio URL</span>
+                <input
+                  v-model="editForm.portfolioUrl"
+                  type="url"
+                  placeholder="https://"
+                  class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                />
+              </label>
+
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">LinkedIn URL</span>
+                <input
+                  v-model="editForm.linkedinUrl"
+                  type="url"
+                  placeholder="https://linkedin.com/in/..."
+                  class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                />
+              </label>
+            </div>
+
+            <label class="block">
+              <span class="mb-2 block text-sm font-medium text-slate-700">Tentang saya</span>
+              <textarea
+                v-model="editForm.about"
+                rows="5"
+                class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100 resize-none"
+              ></textarea>
+            </label>
+
+            <label class="block">
+              <span class="mb-2 block text-sm font-medium text-slate-700">Skill utama</span>
+              <input
+                v-model="editForm.skills"
+                type="text"
+                placeholder="Pisahkan dengan koma"
+                class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+              />
+            </label>
+
+            <div v-if="editError" class="rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
+              {{ editError }}
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-3 border-t border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+            <p class="text-sm text-slate-500">Nama dan email yang diubah di sini akan ikut tercermin di sesi akun demo lokal.</p>
+            <div class="flex items-center gap-3">
+              <button
+                type="button"
+                class="rounded-full border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                @click="closeEditModal"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                class="rounded-full bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+                @click="handleEditProfile"
+              >
+                Simpan edit profile
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 
   <div v-else class="mx-auto max-w-3xl rounded-[30px] border border-dashed border-slate-300 bg-white px-6 py-12 text-center shadow-sm">
