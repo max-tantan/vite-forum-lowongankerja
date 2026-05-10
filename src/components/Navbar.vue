@@ -7,8 +7,39 @@ import { RouterLink } from 'vue-router'
     <div class="container mx-auto px-4">
       <div class="flex h-16 items-center justify-between gap-4">
         <RouterLink to="/" class="flex items-center gap-2">
-          <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span class="text-white font-bold">J</span>
+          <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#0f172a_0%,#2563eb_100%)] shadow-[0_16px_30px_-20px_rgba(37,99,235,0.7)]">
+            <svg
+              viewBox="0 0 40 40"
+              class="h-6 w-6 text-white"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                d="M13 14.5V13.5C13 11.8431 14.3431 10.5 16 10.5H24C25.6569 10.5 27 11.8431 27 13.5V14.5"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+              />
+              <rect
+                x="9.5"
+                y="14.5"
+                width="21"
+                height="14"
+                rx="4.5"
+                stroke="currentColor"
+                stroke-width="2.2"
+              />
+              <path
+                d="M9.5 19.5H30.5"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+              />
+              <circle cx="24.5" cy="24" r="1.6" fill="currentColor" />
+              <circle cx="19.9" cy="24" r="1.6" fill="currentColor" opacity="0.85" />
+              <circle cx="15.3" cy="24" r="1.6" fill="currentColor" opacity="0.7" />
+            </svg>
           </div>
           <span class="text-xl font-bold text-gray-800">JobForum</span>
         </RouterLink>
@@ -34,13 +65,6 @@ import { RouterLink } from 'vue-router'
             active-class="text-blue-600"
           >
             Grup Chat
-          </RouterLink>
-          <RouterLink
-            to="/register"
-            class="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
-            active-class="ring-2 ring-blue-100"
-          >
-            Register
           </RouterLink>
           <RouterLink
             to="/login"
