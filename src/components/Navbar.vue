@@ -1,5 +1,23 @@
 <script setup>
-import { RouterLink } from 'vue-router'
+import { computed } from 'vue'
+import { useRouter, RouterLink } from 'vue-router'
+import { useAuth } from '../composables/useAuth'
+
+const router = useRouter()
+const { currentUser, isAuthenticated, signOut } = useAuth()
+
+const userInitial = computed(() => {
+  if (!currentUser.value?.username) {
+    return 'U'
+  }
+
+  return currentUser.value.username.slice(0, 1).toUpperCase()
+})
+
+const handleSignOut = () => {
+  signOut()
+  router.push('/login')
+}
 </script>
 
 <template>
@@ -66,7 +84,27 @@ import { RouterLink } from 'vue-router'
           >
             Grup Chat
           </RouterLink>
+          <template v-if="isAuthenticated">
+            <RouterLink
+              to="/profile"
+              class="flex items-center gap-3 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+              active-class="ring-2 ring-blue-200"
+            >
+              <span class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
+                {{ userInitial }}
+              </span>
+              <span class="hidden sm:inline">Profil</span>
+            </RouterLink>
+            <button
+              type="button"
+              class="rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:border-blue-200 hover:bg-blue-100"
+              @click="handleSignOut"
+            >
+              Keluar
+            </button>
+          </template>
           <RouterLink
+            v-else
             to="/login"
             class="rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:border-blue-200 hover:bg-blue-100"
             active-class="ring-2 ring-blue-200"

@@ -1,11 +1,15 @@
 <script setup>
-import { computed, ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
+import { useAuth } from '../composables/useAuth'
 
+const router = useRouter()
+const { ensureAccounts, isAuthenticated, signIn } = useAuth()
 const showPassword = ref(false)
 const isSubmitting = ref(false)
+const errorMessage = ref('')
 const form = ref({
-  email: '',
+  identifier: '',
   password: '',
   remember: true
 })
@@ -26,7 +30,7 @@ const helperCards = [
 ]
 
 const canSubmit = computed(() => {
-  return form.value.email.trim() !== '' && form.value.password.trim() !== ''
+  return form.value.identifier.trim() !== '' && form.value.password.trim() !== ''
 })
 
 const submitLabel = computed(() => {
@@ -39,11 +43,32 @@ const handleSubmit = async () => {
   }
 
   isSubmitting.value = true
+  errorMessage.value = ''
 
   window.setTimeout(() => {
+    const result = signIn({
+      identifier: form.value.identifier,
+      password: form.value.password
+    })
+
+    if (!result.ok) {
+      errorMessage.value = result.message
+      isSubmitting.value = false
+      return
+    }
+
     isSubmitting.value = false
+    router.push('/profile')
   }, 900)
 }
+
+onMounted(() => {
+  ensureAccounts()
+
+  if (isAuthenticated.value) {
+    router.replace('/profile')
+  }
+})
 </script>
 
 <template>
@@ -127,17 +152,20 @@ const handleSubmit = async () => {
                 </p>
                 <h2 class="mt-3 text-3xl font-bold text-slate-900">Masuk ke akun Anda</h2>
                 <p class="mt-2 text-sm leading-6 text-slate-500">
-                  Gunakan email dan kata sandi untuk membuka dashboard, forum, dan riwayat aktivitas Anda.
+                  Gunakan username dan kata sandi untuk membuka profil, forum, dan riwayat aktivitas Anda.
                 </p>
+                <div class="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-700">
+                  Akun demo lokal tersedia: <span class="font-semibold">username user</span> dengan password <span class="font-semibold">123</span>.
+                </div>
               </div>
 
               <form class="space-y-5" @submit.prevent="handleSubmit">
                 <label class="block">
-                  <span class="mb-2 block text-sm font-medium text-slate-700">Email</span>
+                  <span class="mb-2 block text-sm font-medium text-slate-700">Username</span>
                   <input
-                    v-model="form.email"
-                    type="email"
-                    placeholder="nama@contoh.com"
+                    v-model="form.identifier"
+                    type="text"
+                    placeholder="Masukkan username, misalnya user"
                     class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
                   />
                 </label>
@@ -173,6 +201,10 @@ const handleSubmit = async () => {
                   <a href="#" class="font-medium text-blue-600 transition hover:text-blue-700">
                     Lupa kata sandi?
                   </a>
+                </div>
+
+                <div v-if="errorMessage" class="rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
+                  {{ errorMessage }}
                 </div>
 
                 <button
