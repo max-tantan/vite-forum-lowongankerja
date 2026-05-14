@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
+import { getCategoryClasses, getModeClasses, getTypeClasses, getCategoryButtonClasses } from '../composables/useHelpers'
 
 const searchQuery = ref('')
 const selectedCategory = ref('Semua')
@@ -154,43 +155,7 @@ const resetFilters = () => {
   selectedCategory.value = 'Semua'
 }
 
-const getCategoryClasses = (category) => {
-  const tones = {
-    Teknologi: 'bg-blue-50 text-blue-700 border-blue-100',
-    Desain: 'bg-amber-50 text-amber-700 border-amber-100',
-    Marketing: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-    Keuangan: 'bg-slate-100 text-slate-700 border-slate-200'
-  }
 
-  return tones[category] || 'bg-slate-100 text-slate-700 border-slate-200'
-}
-
-const getModeClasses = (mode) => {
-  const tones = {
-    Remote: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-    Hybrid: 'bg-sky-50 text-sky-700 border-sky-100',
-    'On-site': 'bg-orange-50 text-orange-700 border-orange-100'
-  }
-
-  return tones[mode] || 'bg-slate-100 text-slate-700 border-slate-200'
-}
-
-const getTypeClasses = (type) => {
-  const tones = {
-    'Full-time': 'bg-slate-900 text-white border-slate-900',
-    'Part-time': 'bg-white text-slate-700 border-slate-200'
-  }
-
-  return tones[type] || 'bg-white text-slate-700 border-slate-200'
-}
-
-const getCategoryButtonClasses = (category) => {
-  if (selectedCategory.value === category) {
-    return 'border-blue-600 bg-blue-600 text-white shadow-sm'
-  }
-
-  return 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900'
-}
 </script>
 
 <template>
@@ -270,7 +235,7 @@ const getCategoryButtonClasses = (category) => {
                 :key="category"
                 type="button"
                 class="rounded-full border px-4 py-2 text-sm font-medium transition"
-                :class="getCategoryButtonClasses(category)"
+                :class="getCategoryButtonClasses(selectedCategory, category)"
                 @click="selectedCategory = category"
               >
                 {{ category }}

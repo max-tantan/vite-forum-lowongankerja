@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
+import { getCategoryClasses, getCategoryButtonClasses, getInitials } from '../composables/useHelpers'
 import { forumCategories, loadForumPosts, saveForumPosts } from '../data/forumData'
 
 const showCreateModal = ref(false)
@@ -145,33 +146,7 @@ const resetFilters = () => {
   selectedCategory.value = 'Semua'
 }
 
-const getCategoryClasses = (category) => {
-  const tones = {
-    Teknologi: 'border-blue-100 bg-blue-50 text-blue-700',
-    Karir: 'border-emerald-100 bg-emerald-50 text-emerald-700',
-    TipsInterview: 'border-amber-100 bg-amber-50 text-amber-700',
-    Diskusi: 'border-violet-100 bg-violet-50 text-violet-700'
-  }
 
-  return tones[category] || 'border-slate-200 bg-slate-100 text-slate-700'
-}
-
-const getCategoryButtonClasses = (category) => {
-  if (selectedCategory.value === category) {
-    return 'border-blue-600 bg-blue-600 text-white shadow-sm'
-  }
-
-  return 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900'
-}
-
-const getInitials = (name) => {
-  return name
-    .split(' ')
-    .map((part) => part[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
-}
 </script>
 
 <template>
@@ -252,7 +227,7 @@ const getInitials = (name) => {
                 :key="category"
                 type="button"
                 class="rounded-full border px-4 py-2 text-sm font-medium transition"
-                :class="getCategoryButtonClasses(category)"
+                :class="getCategoryButtonClasses(selectedCategory, category)"
                 @click="selectedCategory = category"
               >
                 {{ category }}

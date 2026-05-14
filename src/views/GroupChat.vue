@@ -1,5 +1,6 @@
 <script setup>
 import { computed, nextTick, onMounted, ref } from 'vue'
+import { getInitials } from '../composables/useHelpers'
 
 const currentUser = 'User123'
 const groupSearch = ref('')
@@ -146,14 +147,7 @@ function getGroupTime(groupId) {
   return lastMessage?.time || '--:--'
 }
 
-function getInitials(name) {
-  return name
-    .split(' ')
-    .map((part) => part[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
-}
+
 
 function scrollToBottom() {
   nextTick(() => {

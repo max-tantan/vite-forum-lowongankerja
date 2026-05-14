@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { getCategoryClasses, getInitials } from '../composables/useHelpers'
 import { loadForumPosts, saveForumPosts } from '../data/forumData'
 
 const route = useRoute()
@@ -80,25 +81,7 @@ const addComment = () => {
   newComment.value = ''
 }
 
-const getCategoryClasses = (category) => {
-  const tones = {
-    Teknologi: 'border-blue-100 bg-blue-50 text-blue-700',
-    Karir: 'border-emerald-100 bg-emerald-50 text-emerald-700',
-    TipsInterview: 'border-amber-100 bg-amber-50 text-amber-700',
-    Diskusi: 'border-violet-100 bg-violet-50 text-violet-700'
-  }
 
-  return tones[category] || 'border-slate-200 bg-slate-100 text-slate-700'
-}
-
-const getInitials = (name) => {
-  return name
-    .split(' ')
-    .map((part) => part[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
-}
 </script>
 
 <template>

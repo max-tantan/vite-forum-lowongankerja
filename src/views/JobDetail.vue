@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { getCategoryClasses, getModeClasses } from '../composables/useHelpers'
 
 const route = useRoute()
 const router = useRouter()
@@ -266,26 +267,7 @@ const canSubmit = computed(() => {
   )
 })
 
-const getCategoryClasses = (category) => {
-  const tones = {
-    Teknologi: 'border-blue-100 bg-blue-50 text-blue-700',
-    Desain: 'border-amber-100 bg-amber-50 text-amber-700',
-    Marketing: 'border-emerald-100 bg-emerald-50 text-emerald-700',
-    Keuangan: 'border-slate-200 bg-slate-100 text-slate-700'
-  }
 
-  return tones[category] || 'border-slate-200 bg-slate-100 text-slate-700'
-}
-
-const getModeClasses = (mode) => {
-  const tones = {
-    Remote: 'border-emerald-100 bg-emerald-50 text-emerald-700',
-    Hybrid: 'border-sky-100 bg-sky-50 text-sky-700',
-    'On-site': 'border-orange-100 bg-orange-50 text-orange-700'
-  }
-
-  return tones[mode] || 'border-slate-200 bg-slate-100 text-slate-700'
-}
 
 const handleCvChange = (event) => {
   const [file] = event.target.files || []
