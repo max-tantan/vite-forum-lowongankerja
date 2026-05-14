@@ -124,6 +124,60 @@ export const useAuth = () => {
     }
   }
 
+  const signUp = ({ username, email, password, fullName, role }) => {
+    const trimmedUsername = (username || '').trim().toLowerCase()
+    const trimmedEmail = (email || '').trim().toLowerCase()
+
+    if (!trimmedUsername || !trimmedEmail || !password || !fullName?.trim()) {
+      return {
+        ok: false,
+        message: 'Semua field wajib diisi (nama, email, username, dan password).'
+      }
+    }
+
+    const accounts = getStoredAccounts()
+
+    const duplicateUsername = accounts.some(
+      (account) => account.username.toLowerCase() === trimmedUsername
+    )
+
+    if (duplicateUsername) {
+      return {
+        ok: false,
+        message: `Username "${trimmedUsername}" sudah dipakai. Coba gunakan username lain.`
+      }
+    }
+
+    const duplicateEmail = accounts.some(
+      (account) => account.email.toLowerCase() === trimmedEmail
+    )
+
+    if (duplicateEmail) {
+      return {
+        ok: false,
+        message: 'Email ini sudah terdaftar. Silakan masuk atau gunakan email lain.'
+      }
+    }
+
+    const newAccount = {
+      id: accounts.length > 0 ? Math.max(...accounts.map((a) => a.id)) + 1 : 1,
+      username: trimmedUsername,
+      email: trimmedEmail,
+      password,
+      fullName: fullName.trim(),
+      role: role || 'Community Member'
+    }
+
+    accounts.push(newAccount)
+    setStoredAccounts(accounts)
+    persistSession(newAccount)
+
+    return {
+      ok: true,
+      user: sanitizeUser(newAccount)
+    }
+  }
+
   const signOut = () => {
     clearSession()
   }
@@ -170,6 +224,7 @@ export const useAuth = () => {
     isAuthenticated,
     ensureAccounts,
     signIn,
+    signUp,
     signOut,
     updateCurrentUserProfile
   }

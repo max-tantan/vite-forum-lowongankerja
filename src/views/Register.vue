@@ -1,12 +1,19 @@
 <script setup>
-import { computed, ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
+import { useAuth } from '../composables/useAuth'
+
+const router = useRouter()
+const { isAuthenticated, signUp } = useAuth()
 
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 const isSubmitting = ref(false)
+const errorMessage = ref('')
+const successMessage = ref('')
 const form = ref({
   name: '',
+  username: '',
   email: '',
   password: '',
   confirmPassword: '',
@@ -34,6 +41,7 @@ const benefits = [
 const canSubmit = computed(() => {
   return (
     form.value.name.trim() !== '' &&
+    form.value.username.trim() !== '' &&
     form.value.email.trim() !== '' &&
     form.value.password.trim() !== '' &&
     form.value.confirmPassword.trim() !== '' &&
@@ -53,17 +61,40 @@ const submitLabel = computed(() => {
   return isSubmitting.value ? 'Membuat akun...' : 'Buat akun'
 })
 
-const handleSubmit = async () => {
+const handleSubmit = () => {
   if (!canSubmit.value || isSubmitting.value) {
     return
   }
 
   isSubmitting.value = true
+  errorMessage.value = ''
+  successMessage.value = ''
 
   window.setTimeout(() => {
+    const result = signUp({
+      username: form.value.username,
+      email: form.value.email,
+      password: form.value.password,
+      fullName: form.value.name,
+      role: form.value.role
+    })
+
+    if (!result.ok) {
+      errorMessage.value = result.message
+      isSubmitting.value = false
+      return
+    }
+
     isSubmitting.value = false
+    router.push('/profile')
   }, 900)
 }
+
+onMounted(() => {
+  if (isAuthenticated.value) {
+    router.replace('/profile')
+  }
+})
 </script>
 
 <template>
@@ -163,6 +194,16 @@ const handleSubmit = async () => {
                 </label>
 
                 <label class="block">
+                  <span class="mb-2 block text-sm font-medium text-slate-700">Username</span>
+                  <input
+                    v-model="form.username"
+                    type="text"
+                    placeholder="username unik untuk login"
+                    class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                  />
+                </label>
+
+                <label class="block">
                   <span class="mb-2 block text-sm font-medium text-slate-700">Email</span>
                   <input
                     v-model="form.email"
@@ -233,6 +274,10 @@ const handleSubmit = async () => {
                     Saya menyetujui syarat penggunaan dan kebijakan privasi JobForum.
                   </span>
                 </label>
+
+                <div v-if="errorMessage" class="rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
+                  {{ errorMessage }}
+                </div>
 
                 <button
                   type="submit"
