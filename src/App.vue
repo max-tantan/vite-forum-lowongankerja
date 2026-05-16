@@ -3,9 +3,11 @@ import { RouterView } from 'vue-router'
 import Footer from './components/Footer.vue'
 import Navbar from './components/Navbar.vue'
 import AndroidLayout from './layout/AndroidLayout.vue'
+import ToastNotify from './components/ToastNotify.vue'
 </script>
 
 <template>
+  <ToastNotify />
   <!-- Desktop Layout: visible on md and above -->
   <div class="hidden md:flex min-h-screen flex-col bg-gray-50">
     <Navbar />
