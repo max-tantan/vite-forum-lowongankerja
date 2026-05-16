@@ -7,6 +7,7 @@ import ForumPost from '../views/ForumPost.vue'
 import Login from '../views/Login.vue'
 import Profile from '../views/Profile.vue'
 import Register from '../views/Register.vue'
+import Email from '../views/Email.vue'
 import { useAuth } from '../composables/useAuth'
 
 const routes = [
@@ -17,6 +18,7 @@ const routes = [
   { path: '/job/:id', name: 'JobDetail', component: JobDetail },
   { path: '/login', name: 'Login', component: Login },
   { path: '/profile', name: 'Profile', component: Profile, meta: { requiresAuth: true } },
+  { path: '/email', name: 'Email', component: Email },
   { path: '/register', name: 'Register', component: Register }
 ]
 

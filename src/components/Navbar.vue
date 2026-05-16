@@ -84,6 +84,13 @@ const handleSignOut = () => {
           >
             Grup Chat
           </RouterLink>
+          <RouterLink 
+            to="/email" 
+            class="text-gray-600 hover:text-blue-600 transition font-medium"
+            active-class="text-blue-600"
+          >
+            Notifikasi
+          </RouterLink>
           <template v-if="isAuthenticated">
             <RouterLink
               to="/profile"
